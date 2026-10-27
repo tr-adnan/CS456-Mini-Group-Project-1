@@ -8,3 +8,6 @@ Developed `voulnerable_firewall.py` to set up a defective firewall that reads in
 
 ### Logan Uyetake
 Developed `adversayry_assessment.py` to set up an attacker script to attempt to exploit a vulnerability in the architecture of `vulnerable_firewall.py` and `heartbeat_monitor.py`. Designed attack 1 to attempt to create a UDP socket and send hardcoded payloads to the monitor to fake a pulse from the firewall. Also Designed attack 2 to sniff out an outbound heartbeat packet from the firewall to capture the payload then repeat the process of attack 1.
+
+### Crawford Rash
+Wrote the write up, and recorded the video demo
