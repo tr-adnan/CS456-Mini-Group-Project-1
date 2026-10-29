@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Firewall checkpoints (runtime state)
+firewall_checkpoint.json
+firewall_checkpoint.tmp
