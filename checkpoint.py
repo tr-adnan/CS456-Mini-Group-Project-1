@@ -3,6 +3,7 @@ import hmac
 import json
 import os
 import time
+import math
 from pathlib import Path
 
 # Checkpoint settings (Option A: Passive Redundancy)
@@ -13,18 +14,21 @@ TEMP_FILE = CHECKPOINT_FILE.with_suffix(".tmp")
 CHECKPOINT_KEY = os.environ.get("CHECKPOINT_KEY", "cs456-demo-checkpoint-key").encode("utf-8")
 
 
-def sign_state(state):
-    """Return an HMAC-SHA256 signature for the given state."""
-    state_bytes = json.dumps(state, sort_keys=True).encode("utf-8")
+def sign_state(state, saved_at):
+    """Sign the firewall state and checkpoint timestamp."""
+    data = {"state": state, "saved_at": saved_at}
+    state_bytes = json.dumps(data, sort_keys=True).encode("utf-8")
     return hmac.new(CHECKPOINT_KEY, state_bytes, hashlib.sha256).hexdigest()
 
 
 def save_checkpoint(state):
     """Write the firewall state to disk as a signed checkpoint."""
+    saved_at = time.time()
+
     record = {
-        "saved_at": time.time(),
+        "saved_at": saved_at,
         "state": state,
-        "signature": sign_state(state)
+        "signature": sign_state(state, saved_at)
     }
 
     # Write to a temp file first, then swap it in, so a crash mid-write
@@ -46,11 +50,21 @@ def load_checkpoint():
 
     state = record.get("state") if isinstance(record, dict) else None
     signature = record.get("signature") if isinstance(record, dict) else None
+    saved_at = record.get("saved_at") if isinstance(record, dict) else None
 
-    # Reject checkpoints whose contents do not match their signature
-    if not isinstance(state, dict) or not isinstance(signature, str) \
-            or not hmac.compare_digest(signature, sign_state(state)):
+    # Check that the timestamp is valid
+    if (isinstance(saved_at, bool)
+            or not isinstance(saved_at, (int, float))
+            or not math.isfinite(saved_at)
+            or saved_at <= 0):
+        print("[!] Checkpoint has an invalid timestamp.")
+        return None, None
+
+    # Verify checkpoint integrity
+    if (not isinstance(state, dict)
+            or not isinstance(signature, str)
+            or not hmac.compare_digest(signature, sign_state(state, saved_at))):
         print("[!] Checkpoint failed integrity check. It may have been tampered with.")
         return None, None
 
-    return state, record.get("saved_at")
+    return state, saved_at

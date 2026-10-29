@@ -17,7 +17,8 @@ def run_backup():
 
     if saved_state is None:
         # Stay available with the default rules rather than refusing to start
-        print(f"[{timestamp()}] BACKUP: Starting with default rules (no valid checkpoint)")
+        print(f"[{timestamp()}] BACKUP WARNING: No valid checkpoint found.")
+        print("Starting with default rules. Previous dynamic state was not restored.")
     else:
         firewall.restore_state(saved_state)
         saved_time = datetime.fromtimestamp(saved_at).strftime("%Y-%m-%d %H:%M:%S") if saved_at else "unknown"

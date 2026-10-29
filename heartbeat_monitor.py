@@ -14,6 +14,9 @@ MISSED_BEAT_LIMIT = 3
 DELAY_TOLERANCE = 0.5
 TIMEOUT_WINDOW = HEARTBEAT_INTERVAL * MISSED_BEAT_LIMIT + DELAY_TOLERANCE
 
+# Enable automatic recovery for Part 2
+ENABLE_AUTO_FAILOVER = False
+
 # Save monitor events to a log file
 logging.basicConfig(
     filename=Path(__file__).with_name("heartbeat.log"),
