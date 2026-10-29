@@ -25,8 +25,7 @@ state_lock = threading.Lock()
 state = {
     "blocklist": set(BLACKLISTED_IPS),
     "allowed": 0,
-    "blocked": 0,
-    "dropped": 0
+    "blocked": 0
 }
 
 
@@ -36,8 +35,7 @@ def snapshot_state():
         return {
             "blocklist": sorted(state["blocklist"]),
             "allowed": state["allowed"],
-            "blocked": state["blocked"],
-            "dropped": state["dropped"]
+            "blocked": state["blocked"]
         }
 
 
@@ -47,7 +45,6 @@ def restore_state(saved_state):
         state["blocklist"] = set(saved_state.get("blocklist", BLACKLISTED_IPS))
         state["allowed"] = saved_state.get("allowed", 0)
         state["blocked"] = saved_state.get("blocked", 0)
-        state["dropped"] = saved_state.get("dropped", 0)
 
 
 def send_heartbeats():
@@ -68,27 +65,6 @@ def save_checkpoints():
         time.sleep(CHECKPOINT_INTERVAL)
 
 
-def inspect_packet(packet):
-    """Inspect simulated traffic and occasionally crash on poisoned payloads."""
-    src_ip = packet.get("src_ip")
-    payload = packet.get("payload", "")
-
-    with state_lock:
-        is_blocked = src_ip in state["blocklist"]
-        state["blocked" if is_blocked else "allowed"] += 1
-
-    if is_blocked:
-        print(f"[-] BLOCKED: Packet from blacklisted IP {src_ip}")
-        return
-
-    print(f"[*] ALLOWED: Packet from {src_ip}: {payload}")
-
-    # Simulate a crash with a 20% chance for poisoned payloads
-    if "POISON" in payload and random.random() < 0.20:
-        print("[!] Simulated firewall crash triggered by poisoned packet.")
-        sys.exit(1)
-
-
 def block_ip(ip):
     """Add an IP to the dynamic blocklist."""
     with state_lock:
@@ -98,43 +74,49 @@ def block_ip(ip):
     return {"result": "blocked", "ip": ip}
 
 
-def handle_request(data):
-    """Route a client request and return a reply for control requests."""
+def inspect_packet(data):
+    """Inspect simulated traffic, answer state requests, and occasionally crash on poisoned payloads."""
     try:
-        request = json.loads(data.decode("utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        request = None
+        packet = json.loads(data.decode("utf-8"))
 
-    if not isinstance(request, dict):
+        # Control requests read or change the firewall state and get a reply
+        if packet.get("type") == "status":
+            return snapshot_state()
+        if packet.get("type") == "block" and isinstance(packet.get("ip"), str):
+            return block_ip(packet["ip"])
+
+        src_ip = packet.get("src_ip")
+        payload = packet.get("payload", "")
+
         with state_lock:
-            state["dropped"] += 1
+            is_blocked = src_ip in state["blocklist"]
+            state["blocked" if is_blocked else "allowed"] += 1
+
+        if is_blocked:
+            print(f"[-] BLOCKED: Packet from blacklisted IP {src_ip}")
+            return
+
+        print(f"[*] ALLOWED: Packet from {src_ip}: {payload}")
+
+        # Simulate a crash with a 20% chance for poisoned payloads
+        if "POISON" in payload and random.random() < 0.20:
+            print("[!] Simulated firewall crash triggered by poisoned packet.")
+            sys.exit(1)
+
+    except json.JSONDecodeError:
         print("[-] Dropped malformed packet.")
-        return None
-
-    # Requests without a type are normal traffic packets
-    request_type = request.get("type", "packet")
-
-    if request_type == "status":
-        return snapshot_state()
-    if request_type == "block" and isinstance(request.get("ip"), str):
-        return block_ip(request["ip"])
-    if request_type == "packet":
-        inspect_packet(request)
-        return None
-
-    return {"error": f"unknown request type: {request_type}"}
 
 
-def run_firewall(role="PRIMARY"):
-    """Start the firewall with its background heartbeat and checkpoint threads."""
+def run_firewall():
+    """Start the firewall and its background heartbeat and checkpoint threads."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcp_socket:
         tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         tcp_socket.bind((TRAFFIC_HOST, TRAFFIC_PORT))
         tcp_socket.listen(5)
 
-        print(f"[{role}] Firewall running on {TRAFFIC_HOST}:{TRAFFIC_PORT}")
+        print(f"Firewall running on {TRAFFIC_HOST}:{TRAFFIC_PORT}")
 
-        # Stop the background threads when the firewall process exits
+        # Stop the heartbeat thread when the firewall process exits
         threading.Thread(target=send_heartbeats, daemon=True).start()
         print(f"Sending heartbeats to {MONITOR_HOST}:{MONITOR_PORT} every {HEARTBEAT_INTERVAL}s")
 
@@ -145,15 +127,10 @@ def run_firewall(role="PRIMARY"):
             client_conn, _ = tcp_socket.accept()
             with client_conn:
                 data = client_conn.recv(1024)
-                if not data:
-                    continue
-
-                reply = handle_request(data)
-                if reply is not None:
-                    try:
+                if data:
+                    reply = inspect_packet(data)
+                    if reply is not None:
                         client_conn.sendall(json.dumps(reply).encode("utf-8"))
-                    except OSError:
-                        print("[-] Client disconnected before reply was sent.")
 
 
 if __name__ == "__main__":

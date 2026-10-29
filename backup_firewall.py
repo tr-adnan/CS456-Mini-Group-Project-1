@@ -24,9 +24,9 @@ def run_backup():
         restored = firewall.snapshot_state()
         print(f"[{timestamp()}] BACKUP: Restored checkpoint saved at {saved_time}")
         print(f"    Blocklist: {', '.join(restored['blocklist'])}")
-        print(f"    Allowed: {restored['allowed']}  Blocked: {restored['blocked']}  Dropped: {restored['dropped']}")
+        print(f"    Allowed: {restored['allowed']}  Blocked: {restored['blocked']}")
 
-    firewall.run_firewall(role="BACKUP")
+    firewall.run_firewall()
 
 
 if __name__ == "__main__":

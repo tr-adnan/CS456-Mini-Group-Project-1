@@ -59,7 +59,7 @@ def print_status():
 
     print("\nFirewall state:")
     print(f"    Blocklist: {', '.join(status['blocklist'])}")
-    print(f"    Allowed: {status['allowed']}  Blocked: {status['blocked']}  Dropped: {status['dropped']}")
+    print(f"    Allowed: {status['allowed']}  Blocked: {status['blocked']}")
 
 
 def main():
