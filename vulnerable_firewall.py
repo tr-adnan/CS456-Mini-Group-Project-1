@@ -110,7 +110,11 @@ def inspect_packet(data):
 def run_firewall():
     """Start the firewall and its background heartbeat and checkpoint threads."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcp_socket:
-        tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Prevent two firewalls from using the same port on Windows
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        else:
+            tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         tcp_socket.bind((TRAFFIC_HOST, TRAFFIC_PORT))
         tcp_socket.listen(5)
 
