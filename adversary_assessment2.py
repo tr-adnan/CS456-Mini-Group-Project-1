@@ -126,12 +126,12 @@ def run_scenario_2_tamper(tamper_type):
 # attack_mode variable: True = activate the scenario 1 communication blockage
 # attack_mode variable: False = allows regular flow of traffic(only works with --scenario-1)
 
-# scenario 1 execution: python adversary_attack.py --scenario-1
-# scenario 2 execution: python adversary_attack.py --scenario-2 [malformed, timestamp, signature] <-(only one of these)
+# scenario 1 execution: python adversary_attack2.py --scenario-1
+# scenario 2 execution: python adversary_attack2.py --scenario-2 [malformed, timestamp, signature] <-(only one of these)
 
 # START-UP ORDER:
-Scenario 1: [python adversary_attack.py --scenario-1] --> [python vulnerable_firewall.py] --> [python heartbeat_monitor.py]
-Scenario 2: [python vulnerable_firewall.py] --> [python heartbeat_monitor.py] --> [python adversary_attack.py --scenario-2 (malformed, timestamp, signature)]
+Scenario 1: [python adversary_attack2.py --scenario-1] --> [python vulnerable_firewall.py] --> [python heartbeat_monitor.py]
+Scenario 2: [python vulnerable_firewall.py] --> [python heartbeat_monitor.py] --> [python adversary_attack2.py --scenario-2 (malformed, timestamp, signature)]
 """
 if __name__ == "__main__":
     scenario = sys.argv[1]
