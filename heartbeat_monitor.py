@@ -21,7 +21,7 @@ DELAY_TOLERANCE = 0.5
 TIMEOUT_WINDOW = HEARTBEAT_INTERVAL * MISSED_BEAT_LIMIT + DELAY_TOLERANCE
 
 FIREWALL_HOST = "127.0.0.1"
-FIREWALL_PORT = 8080
+FIREWALL_PORT = 8070 # [8080 for scenario 2 : 8070 for scenario 1]
 BACKUP_SCRIPT = Path(__file__).with_name("backup_firewall.py")
 
 logging.basicConfig(
