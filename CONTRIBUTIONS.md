@@ -1,5 +1,7 @@
 # Team Member Contributions
 
+## MP1.1
+
 ### Adnan Alturkestani
 Developed `heartbeat_monitor.py` to detect firewall failures, log alerts, and track recovery. Added the heartbeat sender to `vulnerable_firewall.py` and updated `traffic_generator.py` with additional test IPs and optional crash testing. Also reviewed and cleaned up the code, helped improve `adversary_assessment.py`, and created the repository `README.md`.
 
@@ -11,3 +13,17 @@ Developed `adversayry_assessment.py` to set up an attacker script to attempt to 
 
 ### Crawford Rash
 Wrote the write up, and recorded the video demo
+
+## MP1.2
+
+### Adnan Alturkestani
+Updated `heartbeat_monitor.py` to automatically detect primary firewall failures, launch `backup_firewall.py`, and verify service recovery. Added timestamped failover logs and basic safeguards against false failovers while preserving Part 1 functionality. Also improved checkpoint validation and error handling in `checkpoint.py` and `backup_firewall.py`, cleaned up `README.md`, and tested automatic failover and state recovery.
+
+### Bode Kaanta
+
+
+### Logan Uyetake
+
+
+### Crawford Rash
+
