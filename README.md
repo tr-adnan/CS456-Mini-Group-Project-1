@@ -2,50 +2,88 @@
 
 This repository contains our group project for **CS456: Modern Cybersecurity** at **Colorado State University**.
 
-The project focuses on building a simple firewall service and a heartbeat monitoring system to detect unexpected crashes and explore system availability.
+The project explores system availability through a simulated firewall, heartbeat monitoring, automatic failover, and adversarial testing.
 
 ## Project Files
-- `vulnerable_firewall.py` - Simulates a firewall (primary node) that inspects traffic, keeps a dynamic blocklist and traffic counters, checkpoints that state every second, and randomly crashes when processing certain test payloads.
-- `checkpoint.py` - Saves and loads signed firewall checkpoints (Part 2, Option A: Passive Redundancy).
-- `backup_firewall.py` - Standby firewall that loads the latest checkpoint and takes over the primary's address.
-- `traffic_generator.py` - Generates simulated traffic to test the firewall. Use `--crash-test` to send poisoned traffic and `--status` to query the firewall's current state.
-- `heartbeat_monitor.py` - Monitors the firewall's availability.
-- `adversary_assessment.py` - Tests heartbeat spoofing and replay attacks against the monitor.
+
+- `vulnerable_firewall.py` - Primary firewall with dynamic state and simulated crashes.
+- `heartbeat_monitor.py` - Detects failures and triggers automatic failover.
+- `backup_firewall.py` - Restores saved state and takes over after a crash.
+- `checkpoint.py` - Saves and verifies firewall checkpoints.
+- `traffic_generator.py` - Generates test traffic and checks firewall state.
+- `adversary_assessment.py` - Part 1 spoofing and replay attacks.
+- `adversary_assessment2.py` - Part 2 false failover and checkpoint tampering attacks.
 
 ## How to Run
+
+Run each script in a separate terminal. Stop previous processes before starting another experiment.
+
+**Default settings (except Part 2, Scenario 1):**
+- Firewall: `MONITOR_PORT = 9999`
+- Monitor: `FIREWALL_PORT = 8080`
+
 ### Part 1: Crash Detection
-1. **Terminal 1** - Start the monitor:
-   ```
-   python heartbeat_monitor.py
-   ```
-2. **Terminal 2** - Start the firewall (do this within a few seconds of step 1, or the monitor will alert before the firewall is up):
-   ```
-   python vulnerable_firewall.py
-   ```
-   The monitor should start printing `HEARTBEAT received: Firewall healthy` every second.
-3. **Terminal 3** - Send traffic:
-   ```
-   python traffic_generator.py
-   ```
-   To trigger the random crash, run `python traffic_generator.py --crash-test`. Repeat it until the firewall prints `Simulated firewall crash triggered by poisoned packet.` and exits.
-4. About 3.5 seconds after the crash, the monitor prints an `ALERT: Firewall unresponsive` message. Alerts and recoveries are also saved to `heartbeat.log`.
 
-### Part 2: Failover with Checkpoints
-1. Follow Part 1, steps 1-3 (including `--crash-test`). While the primary runs, it saves its state to `firewall_checkpoint.json` every second.
-2. **Terminal 2** - Once the primary has crashed, start the backup:
-   ```
-   python backup_firewall.py
-   ```
-   The backup prints the checkpoint it restored, then takes over port 8080. The monitor prints `RECOVERED: Firewall is responding again`.
-3. **Terminal 3** - Confirm the pre-crash state survived:
-   ```
-   python traffic_generator.py --status
-   ```
-   The blocklist should still include the dynamically added `10.0.0.66`. The counters should match the backup's restored values, minus any traffic received after the last checkpoint.
+Set `ENABLE_AUTO_FAILOVER = False` in `heartbeat_monitor.py`.
 
-### Adversarial Assessment (Part 1)
-- **Heartbeat spoofing:** with the monitor and firewall running, run `python adversary_assessment.py --spoof` in a new terminal, then crash the firewall. The monitor keeps reporting the firewall as healthy.
-- **Replay attack:** with the monitor stopped, run `python adversary_assessment.py --replay`, then start the firewall. After the heartbeat is captured, start the monitor and crash the firewall. The monitor keeps reporting the firewall as healthy.
+**Normal Operation:**
+
+`python vulnerable_firewall.py` → `python heartbeat_monitor.py` → `python traffic_generator.py`
+
+**Crash Detection:**
+
+`python vulnerable_firewall.py` → `python heartbeat_monitor.py` → `python traffic_generator.py --crash-test`
+
+**Attack 1 - Heartbeat Spoofing:**
+
+`python vulnerable_firewall.py` → `python heartbeat_monitor.py` → `python adversary_assessment.py --spoof` → `python traffic_generator.py --crash-test`
+
+**Attack 2 - Replay Attack:**
+
+`python adversary_assessment.py --replay` → `python vulnerable_firewall.py` → Wait for heartbeat capture → `python heartbeat_monitor.py` → `python traffic_generator.py --crash-test`
+
+For both attacks, press `Ctrl+C` in the adversarial script's terminal to stop the fake heartbeats and observe the monitor detecting the failure.
+
+### Part 2: Automatic Failover
+
+Set `ENABLE_AUTO_FAILOVER = True` in `heartbeat_monitor.py`.
+
+**Execution Order:**
+
+`python vulnerable_firewall.py` → `python heartbeat_monitor.py` → `python traffic_generator.py` → `python traffic_generator.py --crash-test` → Wait for automatic recovery → `python traffic_generator.py --status`
+
+The monitor automatically starts the backup after a crash. The restored state should include the dynamically blocked IP `10.0.0.66`.
+
+### Part 2: Adversarial Assessment
+
+**Scenario 1 - False Failover (Split-Brain)**
+
+Change the following settings:
+- Firewall: `MONITOR_PORT = 9998`
+- Monitor: `FIREWALL_PORT = 8070`
+- In `adversary_assessment2.py`, set `attack_mode = True` to block heartbeat communication (`False` for normal forwarding).
+
+**Execution Order:**
+
+`python adversary_assessment2.py --scenario-1` → `python vulnerable_firewall.py` → `python heartbeat_monitor.py`
+
+The attacker acts as a proxy and interrupts communication while the primary is still running to test false failover behavior.
+
+**Scenario 2 - Checkpoint Tampering**
+
+Restore the default port settings (`9999` and `8080`).
+
+**Execution Order:**
+
+`python vulnerable_firewall.py` → `python heartbeat_monitor.py` → `python adversary_assessment2.py --scenario-2 malformed` → `python traffic_generator.py --crash-test`
+
+Available test modes:
+- `malformed` - Corrupts the checkpoint format.
+- `timestamp` - Changes the checkpoint timestamp.
+- `signature` - Modifies the checkpoint signature.
+
+Run one mode at a time and observe how the backup handles the modified checkpoint.
 
 ## Disclaimer
-This project was developed strictly for educational purposes as part of our cybersecurity coursework at CSU. All testing is performed in a controlled, local environment using simulated traffic. The code is not intended for malicious activities or use against any systems without proper authorization.
+
+This project was developed strictly for educational purposes as part of our cybersecurity coursework at CSU. All testing is performed in a controlled, local environment using simulated traffic. The code is not intended for malicious activities or use against systems without proper authorization.
