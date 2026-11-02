@@ -1,3 +1,4 @@
+
 # CS456 - Mini Group Project 1
 
 This repository contains our group project for **CS456: Modern Cybersecurity** at **Colorado State University**.
@@ -18,13 +19,19 @@ The project explores system availability through a simulated firewall, heartbeat
 
 Run each script in a separate terminal. Stop previous processes before starting another experiment.
 
-**Default settings (except Part 2, Scenario 1):**
-- Firewall: `MONITOR_PORT = 9999`
-- Monitor: `FIREWALL_PORT = 8080`
+**Important:** Check the settings before each test. Scenario 1 uses different ports, which must be reset afterward.
 
 ### Part 1: Crash Detection
 
-Set `ENABLE_AUTO_FAILOVER = False` in `heartbeat_monitor.py`.
+**Required Settings:**
+
+In `vulnerable_firewall.py`:
+- `MONITOR_PORT = 9999`
+
+In `heartbeat_monitor.py`:
+- `ENABLE_AUTO_FAILOVER = False`
+- `MONITOR_PORT = 9999`
+- `FIREWALL_PORT = 8080`
 
 **Normal Operation:**
 
@@ -46,44 +53,71 @@ For both attacks, press `Ctrl+C` in the adversarial script's terminal to stop th
 
 ### Part 2: Automatic Failover
 
-Set `ENABLE_AUTO_FAILOVER = True` in `heartbeat_monitor.py`.
+**Required Settings:**
+
+In `vulnerable_firewall.py`:
+- `MONITOR_PORT = 9999`
+
+In `heartbeat_monitor.py`:
+- `ENABLE_AUTO_FAILOVER = True`
+- `MONITOR_PORT = 9999`
+- `FIREWALL_PORT = 8080`
 
 **Execution Order:**
 
 `python vulnerable_firewall.py` → `python heartbeat_monitor.py` → `python traffic_generator.py` → `python traffic_generator.py --crash-test` → Wait for automatic recovery → `python traffic_generator.py --status`
 
-The monitor automatically starts the backup after a crash. The restored state should include the dynamically blocked IP `10.0.0.66`.
+The monitor should receive heartbeats every second. Once the primary crashes, it automatically starts the backup and restores the saved state. The blocklist should still include `10.0.0.66`.
 
 ### Part 2: Adversarial Assessment
 
-**Scenario 1 - False Failover (Split-Brain)**
+#### Scenario 1 - False Failover (Split-Brain)
 
-Change the following settings:
-- Firewall: `MONITOR_PORT = 9998`
-- Monitor: `FIREWALL_PORT = 8070`
-- In `adversary_assessment2.py`, set `attack_mode = True` to block heartbeat communication (`False` for normal forwarding).
+**Required Settings:**
+
+In `vulnerable_firewall.py`:
+- `MONITOR_PORT = 9998`
+
+In `heartbeat_monitor.py`:
+- `ENABLE_AUTO_FAILOVER = True`
+- `MONITOR_PORT = 9999`
+- `FIREWALL_PORT = 8070`
+
+In `adversary_assessment2.py`:
+- `attack_mode = True` - Blocks communication after forwarding several heartbeats.
+- Set to `False` for normal forwarding.
 
 **Execution Order:**
 
 `python adversary_assessment2.py --scenario-1` → `python vulnerable_firewall.py` → `python heartbeat_monitor.py`
 
-The attacker acts as a proxy and interrupts communication while the primary is still running to test false failover behavior.
+The attacker acts as a proxy, forwarding heartbeats from port `9998` to `9999` before blocking them. The monitor sends status requests through port `8070`. This simulates a communication failure while the primary firewall is still running.
 
-**Scenario 2 - Checkpoint Tampering**
+**Important:** Reset the ports to `9999` and `8080` after this test.
 
-Restore the default port settings (`9999` and `8080`).
+#### Scenario 2 - Checkpoint Tampering
+
+**Required Settings:**
+
+In `vulnerable_firewall.py`:
+- `MONITOR_PORT = 9999`
+
+In `heartbeat_monitor.py`:
+- `ENABLE_AUTO_FAILOVER = True`
+- `MONITOR_PORT = 9999`
+- `FIREWALL_PORT = 8080`
 
 **Execution Order:**
 
-`python vulnerable_firewall.py` → `python heartbeat_monitor.py` → `python adversary_assessment2.py --scenario-2 malformed` → `python traffic_generator.py --crash-test`
+`python vulnerable_firewall.py` → `python heartbeat_monitor.py` → `python traffic_generator.py` → `python adversary_assessment2.py --scenario-2 malformed` → `python traffic_generator.py --crash-test`
 
-Available test modes:
+Available attack modes:
 - `malformed` - Corrupts the checkpoint format.
 - `timestamp` - Changes the checkpoint timestamp.
 - `signature` - Modifies the checkpoint signature.
 
-Run one mode at a time and observe how the backup handles the modified checkpoint.
+Replace `malformed` with either of the other modes to test them separately. Observe whether the backup rejects the altered checkpoint and starts with default rules.
 
 ## Disclaimer
 
-This project was developed strictly for educational purposes as part of our cybersecurity coursework at CSU. All testing is performed in a controlled, local environment using simulated traffic. The code is not intended for malicious activities or use against systems without proper authorization.
+This project was developed for educational purposes as part of our cybersecurity coursework at CSU. All testing is performed locally using simulated traffic. The code is not intended for malicious activity or use against systems without authorization.
