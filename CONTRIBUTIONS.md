@@ -23,7 +23,7 @@ Updated `heartbeat_monitor.py` to automatically detect primary firewall failures
 
 
 ### Logan Uyetake
-
+Developed `adversary_assessment2.py` to set up an attacker script to attempt to create a split-brain scenario by forcing the monitor to spin up a back up firewall when the original firewall was still active through a man in the middle tactic. Also designed scenario 2 to attempt to test checkpoint integrity in `heartbeat_monitor.py`. Scenario 2 test consisted of corrupting various aspects of checkpoint JSON.
 
 ### Crawford Rash
 
