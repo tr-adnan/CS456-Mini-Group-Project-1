@@ -20,7 +20,7 @@ Wrote the write up, and recorded the video demo
 Updated `heartbeat_monitor.py` to automatically detect primary firewall failures, launch `backup_firewall.py`, and verify service recovery. Added timestamped failover logs and basic safeguards against false failovers while preserving Part 1 functionality. Also improved checkpoint validation and error handling in `checkpoint.py` and `backup_firewall.py`, cleaned up `README.md`, and tested automatic failover and state recovery.
 
 ### Bode Kaanta
-
+Implemented the passive redundancy (Option A) state handling. Updated `vulnerable_firewall.py` to keep a dynamic blocklist and traffic counters and save them as checkpoints every second, created `checkpoint.py` to save and verify those checkpoints, and created `backup_firewall.py` to restore the latest checkpoint and take over after a crash. Also updated `traffic_generator.py` to add block rules and check the firewall state, and added the run instructions to `README.md`.
 
 ### Logan Uyetake
 Developed `adversary_assessment2.py` to set up an attacker script to attempt to create a split-brain scenario by forcing the monitor to spin up a back up firewall when the original firewall was still active through a man in the middle tactic. Also designed scenario 2 to attempt to test checkpoint integrity in `heartbeat_monitor.py`. Scenario 2 test consisted of corrupting various aspects of checkpoint JSON.
