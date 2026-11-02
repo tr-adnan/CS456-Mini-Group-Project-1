@@ -7,8 +7,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-# Set to True if testing MP1.2. Keep False if testing MP1.1.
-ENABLE_AUTO_FAILOVER = True
+# False for Part 1 (detection only), True for Part 2 (automatic failover)
+ENABLE_AUTO_FAILOVER = False
 
 # Monitor settings
 MONITOR_HOST = "127.0.0.1"
@@ -21,7 +21,7 @@ DELAY_TOLERANCE = 0.5
 TIMEOUT_WINDOW = HEARTBEAT_INTERVAL * MISSED_BEAT_LIMIT + DELAY_TOLERANCE
 
 FIREWALL_HOST = "127.0.0.1"
-FIREWALL_PORT = 8080 # [8080 for scenario 2 : 8070 for scenario 1]
+FIREWALL_PORT = 8080 # Default: 8080 | Part 2 Scenario 1: 8070
 BACKUP_SCRIPT = Path(__file__).with_name("backup_firewall.py")
 
 logging.basicConfig(

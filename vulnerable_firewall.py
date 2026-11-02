@@ -14,7 +14,7 @@ BLACKLISTED_IPS = {"192.168.1.100", "192.168.1.101"}
 
 # Heartbeat settings (Option A: Push)
 MONITOR_HOST = "127.0.0.1"
-MONITOR_PORT = 9999 # [9999 for scenario 2 : 9998 for scenario 1]
+MONITOR_PORT = 9999 # Default: 9999 | Part 2 Scenario 1: 9998
 HEARTBEAT_INTERVAL = 1.0
 
 # Checkpoint settings (Option A: Passive Redundancy)
